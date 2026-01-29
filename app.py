@@ -2,37 +2,41 @@ import streamlit as st
 import urllib.parse
 import random
 
-# --- 1. 올리(Ally) 레퍼런스 이미지 설정 ---
-# 사용자님이 깃허브에 올린 올리 원본 이미지의 주소를 여기에 넣습니다.
-# (이 주소는 AI가 올리의 생김새를 참고하는 기준점이 됩니다.)
-ALLY_REFERENCE_URL = "https://raw.githubusercontent.com/사용자계정/ally-studio/main/3D-Ally.jpg"
-
-ALLY_DNA = (
-    "chubby light green dinosaur, white circular belly, "
-    "one white horn, white spikes on back, large round eyes, 3D Pixar style"
-)
-
-# --- 2. 페이지 설정 ---
+# --- 1. 페이지 설정 ---
 st.set_page_config(page_title="Ally Studio", page_icon="🦖")
 st.title("🦖 올리(Ally) 이미지 스튜디오")
 
-# --- 3. 생성 로직 ---
-user_input = st.text_input("올리가 지금 무엇을 하고 있나요?", placeholder="예: 서핑보드를 타는")
+# --- 2. 레퍼런스 이미지 주소 설정 ---
+# 중요: GitHub에서 'Raw' 버튼을 눌러 나온 주소를 넣어야 합니다.
+# 만약 주소를 모르겠다면, 아래 DNA 설명을 더 상세하게 고쳐서 해결할 수 있습니다.
+REFERENCE_IMAGE = "https://raw.githubusercontent.com/사용자계정/ally-studio/main/3D-Ally.jpg"
 
-if st.button("✨ 레퍼런스 참고하여 소환하기!"):
+ALLY_DNA = (
+    "chubby light green dinosaur, white circular belly, "
+    "one white horn on head, white spikes on back, very large round eyes, "
+    "3D Pixar render, vivid colors"
+)
+
+# --- 3. 사용자 입력 ---
+user_input = st.text_input("올리가 무엇을 하나요?", placeholder="예: swimming")
+
+if st.button("올리 소환하기!"):
     if user_input:
-        with st.spinner("원본 이미지를 학습하여 올리를 소환 중..."):
+        with st.spinner("이미지를 분석하여 올리를 소환 중입니다..."):
             seed_num = random.randint(1, 1000000)
             
-            # [보완 포인트] 프롬프트 맨 앞에 레퍼런스 이미지 주소를 넣어줍니다.
-            # AI 엔진(Flux/Pollinations)은 주소가 포함되면 해당 이미지를 가이드로 삼습니다.
-            full_prompt = f"Reference Image: {ALLY_REFERENCE_URL}, Character: Ally the dinosaur {user_input}, {ALLY_DNA}"
-            query = urllib.parse.quote(full_prompt)
+            # [수정 포인트] 주소 전달 오류를 막기 위해 구조를 단순화했습니다.
+            # AI에게 "이 이미지를 보고(See), 이 동작을 그려라(Do)"라고 명확히 지시합니다.
+            full_prompt = f"Using this character style: {REFERENCE_IMAGE}, draw Ally the dinosaur {user_input}. Details: {ALLY_DNA}"
             
-            image_url = f"https://image.pollinations.ai/prompt/{query}.png?width=1024&height=1024&seed={seed_num}&nologo=true"
+            # 한글이나 특수문자 에러 방지
+            encoded_query = urllib.parse.quote(full_prompt)
+            
+            # 최종 이미지 생성 주소
+            image_url = f"https://image.pollinations.ai/prompt/{encoded_query}.png?width=1024&height=1024&seed={seed_num}"
             
             # 결과 이미지 출력
-            st.image(image_url, caption=f"학습된 데이터를 바탕으로 생성된 {user_input} 올리", use_container_width=True)
-            st.link_button("🖼️ 고화질 이미지 확인", image_url)
-            
-            st.success("원본의 특징을 살려 소환에 성공했습니다!")
+            st.image(image_url, use_container_width=True)
+            st.success(f"성공! '{user_input}' 중인 올리가 소환되었습니다.")
+    else:
+        st.error("내용을 입력해 주세요!")
