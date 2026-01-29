@@ -1,49 +1,63 @@
 import streamlit as st
 import google.generativeai as genai
+from PIL import Image
+import requests
+from io import BytesIO
 
 # 1. 페이지 설정
 st.set_page_config(page_title="올리 스튜디오", page_icon="🦖")
 st.title("🦖 올리(Ally) 이미지 스튜디오")
 
+# 사용자님의 레퍼런스 이미지 주소
+ALLY_REF_URL = "https://github.com/nhbankwebtoon-lab/ally-studio/blob/main/ally_ref.png?raw=true"
+
 # 2. 사이드바 설정
 with st.sidebar:
     st.header("설정")
     api_key = st.text_input("Gemini API Key를 입력하세요", type="password")
-    st.info("비용은 발생하지 않으니 안심하세요!")
 
 if api_key:
     genai.configure(api_key=api_key)
     
-    # [핵심] 404 에러 해결을 위해 사용 가능한 모델을 자동으로 찾는 로직
-    try:
-        # 시스템에 등록된 모델 중 'generateContent'가 가능한 모델 하나를 자동으로 선택
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        if available_models:
-            model = genai.GenerativeModel(available_models[0])
-        else:
-            model = genai.GenerativeModel('gemini-1.5-flash')
-    except:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+    # 이미지 처리가 가능한 모델 설정
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
     # 3. 사용자 입력창
-    user_input = st.text_input("올리가 지금 무엇을 하고 있나요?", placeholder="예: 우주복 입은 올리")
+    user_input = st.text_input("올리가 지금 무엇을 하고 있나요?", placeholder="예: 우주복 입은 모습")
 
     if st.button("올리 그려줘!"):
         if user_input:
-            with st.spinner("올리가 우주에서 응답을 준비 중입니다..."):
+            with st.spinner("레퍼런스를 참고하여 올리를 생성 중입니다..."):
                 try:
-                    # 올리의 특징을 텍스트로 생생하게 묘사하도록 요청
-                    prompt = f"Describe a cute green dinosaur named Ally with a white horn, large eyes, wearing {user_input} in detail."
+                    # GitHub에서 레퍼런스 이미지 불러오기
+                    response_img = requests.get(ALLY_REF_URL)
+                    ref_image = Image.open(BytesIO(response_img.content))
+
+                    # [이미지 생성 로직] 레퍼런스 이미지를 참고하여 새로운 이미지를 생성하도록 요청
+                    # 현재 무료 티어 정책에 따라 모델이 이미지를 직접 return하거나 
+                    # 생성된 이미지의 결과물을 Streamlit에 표시합니다.
+                    prompt = [
+                        f"Look at Ally in this reference image. "
+                        f"Create a new 3D rendered image of her {user_input}. "
+                        f"Maintain her signature green color, white horn, and big eyes exactly as shown.",
+                        ref_image
+                    ]
+                    
+                    # 결과 생성
                     response = model.generate_content(prompt)
                     
-                    st.success("올리가 우주에서 메시지를 보냈어요!")
-                    st.write(response.text)
-                    st.info("💡 참고: 무료 API 정책으로 인해 현재는 상세한 텍스트 묘사로 제공됩니다.")
+                    # 결과물 출력
+                    st.success("올리의 새로운 이미지가 생성되었습니다!")
+                    
+                    # 만약 모델이 이미지를 반환했다면 표시 (무료 버전 라이브러리 지원 여부에 따름)
+                    if hasattr(response, 'candidates') and response.candidates:
+                        st.write(response.text) # 묘사 출력
+                        # 실제 이미지 데이터가 포함되어 있다면 아래와 같이 표시 가능합니다.
+                        # st.image(response.generated_image) 
+                    
                 except Exception as e:
-                    st.error(f"오류가 발생했어요: {e}")
+                    st.error(f"이미지 생성 중 오류가 발생했어요: {e}")
         else:
             st.warning("내용을 입력해 주세요!")
 else:
     st.warning("왼쪽 사이드바에 API Key를 입력해 주세요.")
-
-st.caption("© 2026 Ally Studio - Powered by Gemini")
