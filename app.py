@@ -16,11 +16,9 @@ with st.sidebar:
 # 3. 이미지 생성 로직
 if api_key:
     genai.configure(api_key=api_key)
-    model = try:
-    # 1순위: 가장 표준적인 이름으로 시도
+try:
     model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception:
-    # 2순위: 1순위가 안될 경우를 대비한 대체 이름
     model = genai.GenerativeModel('models/gemini-1.5-flash')
 
     # 사용자 입력창
