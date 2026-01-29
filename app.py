@@ -12,7 +12,7 @@ with st.sidebar:
 if api_key:
     genai.configure(api_key=api_key)
     
-    # [방어 1] 404 에러 방지 모델 로드
+    # [해결 1] 404 에러 방지 모델 로드
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
     except:
@@ -22,33 +22,33 @@ if api_key:
 
     if st.button("올리 그려줘!"):
         if user_input:
-            with st.spinner("올리를 소환하는 중..."):
+            with st.spinner("이미지 생성 중..."):
                 try:
-                    # [방어 2] 한글 입력을 안전한 영어로 강제 변환
+                    # [해결 2] 한글을 영어로 안전하게 변환 (실패 시 기본 영어 문구 사용)
                     try:
-                        res = model.generate_content(f"Translate '{user_input}' to English short phrase. Output ONLY the English.")
+                        res = model.generate_content(f"Translate '{user_input}' to English short phrase. Output only English.")
                         eng_action = res.text.strip()
                     except:
-                        # Gemini가 죽어도 코드는 멈추지 않음
-                        eng_action = "happy playing"
+                        eng_action = "happy and playing"
 
-                    # [방어 3] 엑박(Broken Image)의 원인인 한글/공백 완벽 제거
-                    # 올리의 외형(초록 몸, 하얀 뿔 하나, 큰 눈)을 영어로 미리 고정 [cite: 2026-01-27]
-                    base_prompt = "A cute 3D chubby green dinosaur character with one small white horn on head and very large round eyes"
-                    final_prompt = f"{base_ally if 'base_ally' in locals() else base_desc if 'base_desc' in locals() else base_prompt}, {eng_action}, high quality, 3D render style"
+                    # [해결 3] 엑박 방지 핵심: 올리의 특징(초록 몸, 하얀 뿔, 큰 눈) 고정 및 URL 인코딩
+                    # 사용자님이 알려주신 올리의 특징을 영어로 미리 박아두었습니다.
+                    base_ally = "A cute 3D chubby green dinosaur with one small white horn on head and very large round eyes"
+                    final_prompt = f"{base_ally}, {eng_action}, high quality, bright colors"
                     
-                    # URL에 한글이나 공백이 들어가지 않도록 암호화
-                    safe_url_prompt = urllib.parse.quote(final_prompt)
-                    image_url = f"https://pollinations.ai/p/{safe_url_prompt}?width=1024&height=1024&seed=42"
+                    # 주소창에서 한글/공백을 완벽하게 기계어로 변환 (이걸 안 하면 엑박이 뜹니다)
+                    safe_prompt = urllib.parse.quote(final_prompt)
+                    image_url = f"https://pollinations.ai/p/{safe_prompt}?width=1024&height=1024&seed=99"
 
-                    # 4. 결과 출력
-                    st.success("드디어 올리가 도착했습니다!")
+                    # 3. 결과 출력
+                    st.success("올리가 도착했습니다!")
+                    # 이미지를 먼저 확실히 띄웁니다.
                     st.image(image_url, use_container_width=True)
                     st.info(f"💡 현재 상황: {user_input}")
 
                 except Exception as e:
-                    st.error("잠시 후 다시 시도해 주세요. 엔진을 점검 중입니다.")
+                    st.error("이미지 서버 연결에 실패했습니다. 다시 시도해 주세요.")
         else:
-            st.warning("내용을 입력해 주세요!")
+            st.warning("내용을 입력해주세요!")
 else:
     st.warning("왼쪽 사이드바에 API Key를 입력해 주세요.")
