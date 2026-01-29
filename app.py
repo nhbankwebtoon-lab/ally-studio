@@ -39,7 +39,7 @@ if api_key:
                         
                         # 3. 결과 출력
                         st.success("드디어 올리가 도착했습니다!")
-                        st.image(img_data, use_container_width=True) # 링크가 아닌 실제 데이터로 표시
+                        st.markdown(f'<img src="{image_url}" width="100%">', unsafe_allow_html=True) # 링크가 아닌 실제 데이터로 표시
                         st.balloons()
                     else:
                         st.error("이미지 서버 응답 지연. 다시 한번 눌러주세요!")
