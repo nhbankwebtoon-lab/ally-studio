@@ -3,7 +3,7 @@ import urllib.parse
 
 # 1. 고정 데이터 설정 (학습 데이터)
 # 공유해주신 올리의 앞/옆/뒤 모습이 담긴 원본 이미지 주소를 여기에 넣으세요.
-ALLY_REF_URL = "https://your-storage-link.com/3D-Ally.jpg" 
+ALLY_REF_URL = "https://github.com/nhbankwebtoon-lab/ally-studio/blob/main/ally_ref.png?raw=true" 
 
 # 2. 올리의 절대 변하지 않는 외형 특징 (학습용 프롬프트)
 ALLY_IDENTITY = (
