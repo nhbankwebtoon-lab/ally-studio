@@ -16,10 +16,11 @@ with st.sidebar:
 # 3. 이미지 생성 로직
 if api_key:
     genai.configure(api_key=api_key)
-try:
-    model = genai.GenerativeModel('gemini-1.5-flash')
-except Exception:
-    model = genai.GenerativeModel('models/gemini-1.5-flash')
+    try:
+        # 모델 설정 (if문 안으로 들여쓰기 필수)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+    except Exception:
+        model = genai.GenerativeModel('models/gemini-1.5-flash')
 
     # 사용자 입력창
     user_input = st.text_input("올리가 지금 무엇을 하고 있나요?", placeholder="예: 피자 먹는 모습, 우주복 입은 모습")
