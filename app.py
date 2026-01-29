@@ -5,7 +5,7 @@ import random
 # --- 1. 원본 올리(Ally) 이미지 학습 (가장 중요!) ---
 # 깃허브에 올린 '3D-Ally.jpg'의 Raw 주소를 여기에 넣으세요.
 # AI는 이 주소의 이미지를 먼저 보고 올리의 생김새를 학습합니다.
-ALLY_ORIGINAL_URL = "https://raw.githubusercontent.com/사용자계정/ally-studio/main/3D-Ally.jpg"
+ALLY_ORIGINAL_URL = "https://github.com/nhbankwebtoon-lab/ally-studio/blob/main/ally_ref.png?raw=true"
 
 ALLY_DETAILS = (
     "chubby light green dinosaur, huge circular eyes covering half of face, "
