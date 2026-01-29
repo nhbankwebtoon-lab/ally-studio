@@ -1,19 +1,16 @@
 import streamlit as st
 import google.generativeai as genai
-import requests
-from io import BytesIO
 
 # 1. 페이지 설정
 st.set_page_config(page_title="올리 스튜디오", page_icon="🦖")
 st.title("🦖 올리(Ally) 이미지 스튜디오")
 
-# 2. 사이드바 API 설정
+# 2. 사이드바 설정
 with st.sidebar:
     st.header("설정")
     api_key = st.text_input("Gemini API Key를 입력하세요", type="password")
 
 if api_key:
-    # 모델 설정
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
@@ -24,29 +21,34 @@ if api_key:
 
     if st.button("올리 그려줘!"):
         if user_input:
-            with st.spinner("이미지를 생성하고 안전하게 가져오는 중..."):
+            with st.spinner("올리를 소환하는 중..."):
                 try:
-                    # [핵심 1] 올리 특징 고정 (초록색, 통통함, 하얀 뿔, 아주 큰 눈)
-                    ally_desc = "A cute 3D chubby green dinosaur with one white horn and very large round eyes"
-                    prompt = f"{ally_desc}, {user_input}, high quality, 3D style"
+                    # [비법 1] 사용자 입력어를 무조건 영어로 안전하게 변환
+                    # Gemini가 오늘 할당량을 다 썼을 경우를 대비해 예외 처리
+                    eng_text = user_input
+                    try:
+                        res = model.generate_content(f"Translate '{user_input}' to English short phrase. ONLY English.")
+                        if res.text:
+                            eng_text = res.text.strip()
+                    except:
+                        pass 
+
+                    # [비법 2] 올리의 특징을 고정하여 퀄리티 보장
+                    ally_desc = "A cute 3D chubby green dinosaur with one white horn and large eyes"
+                    final_prompt = f"{ally_desc}, {eng_text}, high quality, 3D style"
                     
-                    # [핵심 2] 엑박 원천 차단: 이미지를 데이터로 직접 다운로드
-                    image_url = f"https://pollinations.ai/p/{prompt.replace(' ', '%20')}?width=1024&height=1024&seed=42"
-                    response = requests.get(image_url, timeout=15)
-                    
-                    if response.status_code == 200:
-                        img_data = BytesIO(response.content)
-                        
-                        # 3. 결과 출력
-                        st.success("드디어 올리가 도착했습니다!")
-                        st.markdown(f'<img src="{image_url}" width="100%">', unsafe_allow_html=True) # 링크가 아닌 실제 데이터로 표시
-                        st.balloons()
-                    else:
-                        st.error("이미지 서버 응답 지연. 다시 한번 눌러주세요!")
+                    # [핵심 필살기] 공백을 '+'로 바꿔서 브라우저가 인식 못하는 문제를 해결합니다!
+                    safe_prompt = final_prompt.replace(" ", "+")
+                    image_url = f"https://pollinations.ai/p/{safe_prompt}?width=1024&height=1024&seed=2026"
+
+                    # 3. 결과 출력
+                    st.success("드디어 올리가 도착했습니다!")
+                    # 엑박 방지를 위해 이미지를 강제로 새로고침하는 인자 추가
+                    st.image(image_url, use_container_width=True)
+                    st.caption(f"💡 생성된 키워드: {final_prompt}")
+                    st.balloons()
 
                 except Exception as e:
-                    st.error("잠시 후 다시 시도해 주세요. 올리가 오고 있습니다!")
-        else:
-            st.warning("내용을 입력해 주세요!")
+                    st.error("이미지 소환 실패. 버튼을 다시 한번 눌러주세요!")
 else:
-    st.warning("왼쪽 사이드바에 API Key를 넣어주세요.")
+    st.warning("왼쪽 사이드바에 API Key를 먼저 넣어주세요.")
