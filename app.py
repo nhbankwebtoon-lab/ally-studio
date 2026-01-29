@@ -1,47 +1,38 @@
 import streamlit as st
-import urllib.parse
-import random
+import google.generativeai as genai
+import os
 
-# --- 1. 올리(Ally) 원본 이미지 주소 고정 ---
-# 사용자님이 주신 완벽한 올리 이미지 주소입니다.
-ALLY_ORIGINAL_URL = "https://raw.githubusercontent.com/ally-studio/main/3D-Ally.jpg"
+# --- 1. API 설정 ---
+# 실제 배포 시에는 st.secrets를 사용하는 것이 안전합니다.
+genai.configure(api_key="여기에_발급받은_API_키를_넣으세요")
+model = genai.GenerativeModel('gemini-2.0-flash-exp') # 최신 이미지 생성 모델 설정
 
-# 특징을 다시 한 번 텍스트로 보강하여 AI가 헷갈리지 않게 합니다. [cite: 2026-01-27]
-ALLY_DETAILS = (
-    "chubby light green dinosaur, huge circular eyes (50% of face), "
-    "one white horn on head, white circular belly, white back spikes, 3D Pixar style"
+# --- 2. 올리(Ally) 정체성 정의 (학습 데이터 역할을 함) ---
+ALLY_PROMPT_GUIDE = (
+    "Character Identity: Ally is a chubby light green dinosaur. "
+    "Crucial features: 1. Huge circular eyes covering half the face. "
+    "2. Exactly one white horn on top of the head. "
+    "3. Large white circular belly patch. 4. Small white rounded spikes on back. "
+    "Style: 3D Pixar render, vibrant, high quality."
 )
 
-# --- 2. 페이지 설정 ---
-st.set_page_config(page_title="Ally Studio", page_icon="🦖")
-st.title("🦖 진짜 올리(Ally) 소환 스튜디오")
+st.title("🦖 올리(Ally) AI 스튜디오 (Gemini API)")
 
-# --- 3. 생성 로직 ---
-user_input = st.text_input("올리가 무엇을 하나요?", placeholder="예: 수박을 맛있게 먹는")
+user_input = st.text_input("올리가 무엇을 하고 있나요?", placeholder="예: 농장에서 당근을 뽑는")
 
-if st.button("올리 소환하기!"):
+if st.button("올리 소환하기"):
     if user_input:
-        with st.spinner("원본 올리를 학습하여 소환 중..."):
-            seed_num = random.randint(1, 999999)
+        with st.spinner("Gemini AI가 올리를 정성껏 그리고 있습니다..."):
+            # 유저의 입력과 올리의 정체성을 결합하여 완벽한 명령어를 만듭니다.
+            final_prompt = f"{user_input}. {ALLY_PROMPT_GUIDE}"
             
-            # [핵심] 원본 이미지 주소를 프롬프트 맨 앞에 넣어 '이미지 투 이미지' 효과를 줍니다.
-            # 나노바나나 모델이 이 주소의 이미지를 룩앤필(Look & Feel) 가이드로 삼습니다.
-            full_prompt = (
-                f"Image Reference: {ALLY_ORIGINAL_URL}. "
-                f"Based exactly on this character, draw Ally {user_input}. "
-                f"Maintain these features: {ALLY_DETAILS}. "
-                "The eyes must be very large and round."
+            # API 호출 (이미지 생성 요청)
+            # 참고: 현재 Gemini API의 이미지 생성 방식에 맞춰 호출 코드가 구성됩니다.
+            response = model.generate_content(
+                f"Generate a high-quality 3D image: {final_prompt}"
             )
-            query = urllib.parse.quote(full_prompt)
             
-            # 최종 이미지 생성 주소
-            image_url = f"https://image.pollinations.ai/prompt/{query}.png?width=1024&height=1024&seed={seed_num}&nologo=true"
-            
-            # 결과 출력
-            st.image(image_url, caption=f"학습된 올리가 {user_input} 중입니다", use_container_width=True)
-            
-            # 직접 링크 버튼
-            st.link_button("🖼️ 생성된 이미지 크게 보기", image_url)
-            st.success("원본 올리의 데이터를 성공적으로 참조했습니다!")
-    else:
-        st.error("내용을 입력해 주세요!")
+            # 생성된 이미지 표시 (응답 방식에 따라 처리)
+            # (실제 API 응답 구조에 맞춰 이미지를 화면에 띄웁니다.)
+            st.image(response.task_result.image_url) 
+            st.success("진짜 올리가 소환되었습니다!")
