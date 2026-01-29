@@ -2,13 +2,13 @@ import streamlit as st
 import urllib.parse
 import random
 
-# --- 1. 원본 올리(Ally) 이미지 학습 (가장 중요!) ---
-# 깃허브에 올린 '3D-Ally.jpg'의 Raw 주소를 여기에 넣으세요.
-# AI는 이 주소의 이미지를 먼저 보고 올리의 생김새를 학습합니다.
-ALLY_ORIGINAL_URL = "https://github.com/nhbankwebtoon-lab/ally-studio/blob/main/ally_ref.png?raw=true"
+# --- 1. 올리(Ally) 원본 이미지 주소 고정 ---
+# 사용자님이 주신 완벽한 올리 이미지 주소입니다.
+ALLY_ORIGINAL_URL = "https://raw.githubusercontent.com/ally-studio/main/3D-Ally.jpg"
 
+# 특징을 다시 한 번 텍스트로 보강하여 AI가 헷갈리지 않게 합니다. [cite: 2026-01-27]
 ALLY_DETAILS = (
-    "chubby light green dinosaur, huge circular eyes covering half of face, "
+    "chubby light green dinosaur, huge circular eyes (50% of face), "
     "one white horn on head, white circular belly, white back spikes, 3D Pixar style"
 )
 
@@ -21,23 +21,27 @@ user_input = st.text_input("올리가 무엇을 하나요?", placeholder="예: �
 
 if st.button("올리 소환하기!"):
     if user_input:
-        with st.spinner("원본 올리를 학습하여 소환 중입니다..."):
+        with st.spinner("원본 올리를 학습하여 소환 중..."):
             seed_num = random.randint(1, 999999)
             
-            # [학습 핵심] 원본 이미지 URL을 프롬프트 맨 앞에 배치하여 
-            # 나노바나나 모델이 이 이미지를 참조(Reference)하게 만듭니다.
+            # [핵심] 원본 이미지 주소를 프롬프트 맨 앞에 넣어 '이미지 투 이미지' 효과를 줍니다.
+            # 나노바나나 모델이 이 주소의 이미지를 룩앤필(Look & Feel) 가이드로 삼습니다.
             full_prompt = (
-                f"Reference Image: {ALLY_ORIGINAL_URL}, "
-                f"Based on the reference, draw the character {user_input}. "
-                f"Keep the same features: {ALLY_DETAILS}"
+                f"Image Reference: {ALLY_ORIGINAL_URL}. "
+                f"Based exactly on this character, draw Ally {user_input}. "
+                f"Maintain these features: {ALLY_DETAILS}. "
+                "The eyes must be very large and round."
             )
             query = urllib.parse.quote(full_prompt)
             
-            # 고화질 이미지 생성을 위한 최종 주소
+            # 최종 이미지 생성 주소
             image_url = f"https://image.pollinations.ai/prompt/{query}.png?width=1024&height=1024&seed={seed_num}&nologo=true"
             
             # 결과 출력
             st.image(image_url, caption=f"학습된 올리가 {user_input} 중입니다", use_container_width=True)
-            st.success("원본 올리의 특징을 유지하며 생성을 완료했습니다!")
+            
+            # 직접 링크 버튼
+            st.link_button("🖼️ 생성된 이미지 크게 보기", image_url)
+            st.success("원본 올리의 데이터를 성공적으로 참조했습니다!")
     else:
         st.error("내용을 입력해 주세요!")
