@@ -13,8 +13,11 @@ with st.sidebar:
 
 if api_key:
     # [방어 1] 404 에러 방지용 안정적 모델 설정
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+    except:
+        st.error("API 연결에 문제가 있습니다.")
 
     user_input = st.text_input("올리가 지금 무엇을 하고 있나요?", placeholder="예: 바다에서 수영하는 모습")
 
@@ -24,28 +27,29 @@ if api_key:
                 try:
                     # [방어 2] 한글 입력을 영어로 강제 변환 (엔진은 영어만 이해합니다)
                     try:
-                        res = model.generate_content(f"Translate '{user_input}' to English short phrase. Output ONLY the English result.")
+                        res = model.generate_content(f"Translate '{user_input}' to English short phrase. Output ONLY English.")
                         eng_text = res.text.strip()
                     except:
                         eng_text = "happy playing" # 번역 실패 시 기본값
 
-                    # [방어 3] 엑박 방지 핵심: 올리 특징 고정 및 URL 특수문자 완벽 제거
+                    # [방어 3] 엑박 방지 핵심: 올리 특징 고정 및 URL 인코딩 [cite: 2026-01-27]
                     # 올리 외형: 초록 몸, 하얀 뿔 하나, 아주 큰 눈
-                    final_prompt = f"A cute 3D chubby green dinosaur with one small white horn and large eyes, {eng_text}, 3D render style"
+                    base_prompt = "A cute 3D chubby green dinosaur character named Ally with one small white horn on head and very large round eyes"
+                    final_prompt = f"{base_prompt}, {eng_text}, high quality, 3D render style"
                     
-                    # 주소창에서 한글/공백을 완벽하게 기계어로 변환하여 엑박을 차단합니다.
+                    # [필살기] 주소창에서 한글/공백을 완벽하게 기계어로 변환 (이게 없으면 엑박이 뜹니다)
                     safe_prompt = urllib.parse.quote(final_prompt)
                     image_url = f"https://pollinations.ai/p/{safe_prompt}?width=1024&height=1024&seed=42&nologo=true"
 
                     # 3. 최종 결과 출력
                     st.success("드디어 올리가 도착했습니다!")
-                    # 이미지를 화면에 꽉 차게 띄웁니다.
+                    # 이미지를 화면에 띄웁니다.
                     st.image(image_url, use_container_width=True)
                     st.info(f"💡 현재 상황: {user_input}")
-                    st.balloons() # 성공 축하 효과
+                    st.balloons() 
 
                 except Exception as e:
-                    st.error("이미지 서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.")
+                    st.error("이미지 서버 연결에 실패했습니다. 다시 시도해 주세요.")
         else:
             st.warning("내용을 입력해 주세요!")
 else:
